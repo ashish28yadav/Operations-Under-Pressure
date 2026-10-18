@@ -68,7 +68,7 @@ The browser owns presentation and draft state only. Membership checks, role deci
    npm run dev
    ```
 
-   Open the Vite URL printed by the dev server (normally `http://localhost:5173`). The Vite server proxies `/api` to the Express API on port 3000. `npm run build` creates the production client bundle; `npm start` starts the API and serves that bundle when `dist/` exists.
+   Open the Vite URL printed by the dev server (normally `http://localhost:5173`). The Vite server proxies `/api` to the Express API on port 3000. `npm run build` generates Prisma Client from the schema, type-checks the project, and creates the production client bundle; `npm start` starts the API and serves that bundle when `dist/` exists.
 
    If port 3000 is already in use, set `PORT` in `.env` to a free port; Vite reads the same value for its API proxy.
 

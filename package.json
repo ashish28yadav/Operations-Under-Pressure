@@ -7,7 +7,7 @@
     "dev": "concurrently -k \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "tsx watch server/index.ts",
     "dev:web": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "prisma generate && tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
