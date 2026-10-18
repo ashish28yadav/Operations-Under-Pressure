@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.git/
+.env
+.env.*
+coverage/
+*.log
+*.tsbuildinfo
+!.env.example
+secrets/
+*.pem
+*.key

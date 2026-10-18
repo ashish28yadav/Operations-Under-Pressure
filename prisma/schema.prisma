@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TeamRole {
+  VIEWER
+  MEMBER
+  LEAD
+  ADMIN
+}
+
+enum WorkItemType {
+  TASK
+  BUG
+  INCIDENT
+  REQUEST
+}
+
+enum WorkItemPriority {
+  P0
+  P1
+  P2
+  P3
+}
+
+enum WorkItemStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  IN_REVIEW
+  APPROVED
+  DONE
+}
+
+enum ActivityKind {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNEE_CHANGED
+  PRIORITY_CHANGED
+  ITEM_UPDATED
+  COMMENT_ADDED
+}
+
+model User {
+  id                  String                @id @default(cuid())
+  email               String                @unique
+  name                String
+  passwordHash        String
+  active              Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  memberships         Membership[]
+  assignedItems       WorkItem[]            @relation("Assignee")
+  createdItems        WorkItem[]            @relation("Creator")
+  activities          ActivityEvent[]
+  comments            Comment[]
+  idempotencyRecords  IdempotencyRecord[]
+}
+
+model Team {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  workItems   WorkItem[]
+  activities  ActivityEvent[]
+  comments    Comment[]
+}
+
+model Membership {
+  userId    String
+  teamId    String
+  role      TeamRole
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([userId, teamId])
+  @@index([teamId, role])
+}
+
+model WorkItem {
+  id          String          @id @default(cuid())
+  teamId      String
+  title       String          @db.VarChar(200)
+  description String          @default("") @db.Text
+  type        WorkItemType
+  priority    WorkItemPriority @default(P2)
+  status      WorkItemStatus  @default(OPEN)
+  assigneeId  String?
+  createdById String
+  dueAt       DateTime?
+  version     Int             @default(1)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  team        Team            @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  assignee    User?           @relation("Assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy   User            @relation("Creator", fields: [createdById], references: [id], onDelete: Restrict)
+  activities  ActivityEvent[]
+  comments    Comment[]
+
+  @@index([teamId, updatedAt, id])
+  @@index([teamId, status, updatedAt, id])
+  @@index([teamId, priority, updatedAt, id])
+  @@index([teamId, assigneeId, updatedAt, id])
+  @@index([teamId, type, updatedAt, id])
+  @@unique([id, teamId])
+}
+
+model ActivityEvent {
+  id         String       @id @default(cuid())
+  teamId     String
+  workItemId String
+  actorId    String
+  kind       ActivityKind
+  fromValue  String?
+  toValue    String?
+  createdAt  DateTime     @default(now())
+  team       Team         @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  workItem   WorkItem     @relation(fields: [workItemId], references: [id], onDelete: Restrict)
+  actor      User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([workItemId, createdAt, id])
+  @@index([teamId, createdAt])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  teamId     String
+  workItemId String
+  authorId   String
+  body       String   @db.VarChar(5000)
+  createdAt  DateTime @default(now())
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  workItem   WorkItem @relation(fields: [workItemId], references: [id], onDelete: Restrict)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([workItemId, createdAt, id])
+  @@index([teamId, createdAt])
+}
+
+model IdempotencyRecord {
+  id           String   @id @default(cuid())
+  actorId      String
+  key          String   @db.VarChar(200)
+  requestHash  String   @db.Char(64)
+  responseCode Int
+  responseBody Json
+  createdAt    DateTime @default(now())
+  actor        User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@unique([actorId, key])
+  @@index([createdAt])
+}
