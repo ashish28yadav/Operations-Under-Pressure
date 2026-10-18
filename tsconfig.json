@@ -17,5 +17,5 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["vite/client", "vitest/globals", "node"]
   },
-  "include": ["src", "server", "prisma", "tests", "prisma.config.ts", "vite.config.ts"]
+  "include": ["api", "src", "server", "prisma", "tests", "prisma.config.ts", "vite.config.ts"]
 }
